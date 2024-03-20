@@ -1,19 +1,20 @@
-.company-result-title {
+@mixin company-title {
   letter-spacing: -1px;
   margin: 10% 0% 0% 13%;
-  font-family: 'Pretendard-Black';
   font-size: 18px;
   color: #ff8d1d;
+  font-family: 'Pretendard-Black';
+}
+
+.company-result-title {
+  @include company-title;
+  font-family: 'Pretendard-Black';
 }
 
 .company-question-title {
   display: flex;
   position: relative;
-  letter-spacing: -1px;
-  margin: 10% 0% 0% 13%;
-  font-size: 18px;
-  color: #ff8d1d;
-  font-family: 'Pretendard-Black';
+  @include company-title;
 }
 
 .question-info-container {
@@ -33,8 +34,10 @@
 
 .main-company-info {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  text-align: left;
   flex: 1;
+  margin-left: 4%;
 }
 
 .sub-info {
@@ -44,4 +47,9 @@
   display: flex;
   flex-direction: column;
   white-space: nowrap;
+}
+
+.company {
+  display: flex;
+  justify-content: space-around;
 }

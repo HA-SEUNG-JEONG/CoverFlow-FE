@@ -13,7 +13,7 @@ import {
   BASE_URL,
   ACCESS_TOKEN,
   REFRESH_TOKEN,
-} from '../../global/constants/index';
+} from '../../global/constants/index.ts';
 
 function UserInfoHeader() {
   const { isLoggedIn, rewardCount, isDropdownOpen } = useSelector(
@@ -35,7 +35,7 @@ function UserInfoHeader() {
     dispatch(setLoggedIn(loggedInStatus));
 
     if (loggedInStatus) {
-      fetch(`${BASE_URL}/api/member/find-member`, {
+      fetch(`${BASE_URL}/api/member/me`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -80,8 +80,8 @@ function UserInfoHeader() {
     navigate('/store');
   };
 
-  /* 
-  사용자 아이콘을 클릭했을 경우, 드롭다운 메뉴의 표시 상태를 토글합니다. 
+  /*
+  사용자 아이콘을 클릭했을 경우, 드롭다운 메뉴의 표시 상태를 토글합니다.
   HandleMenuClick 이벤트 함수를 통해 드롭다운 메뉴의 각 항목을 클릭해서 페이지를 이동시킵니다.
   */
   const handleUserIconClick = () => {
@@ -106,10 +106,38 @@ function UserInfoHeader() {
   그리고, setLoggedIn(false) 액션을 디스패치하여 로그인 상태를 업데이트한 후, 홈페이지로 리다이렉트 합니다.
   */
   const logout = () => {
-    localStorage.removeItem(ACCESS_TOKEN);
-    localStorage.removeItem(REFRESH_TOKEN);
-    dispatch(setLoggedIn(false));
-    navigate('/');
+    console.log('로그아웃 요청 시작');
+    fetch(`${BASE_URL}/api/member/logout`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN)}`,
+      },
+    })
+      .then((response) => {
+        if (response.ok) {
+          console.log('로그아웃 성공');
+          localStorage.removeItem(ACCESS_TOKEN);
+          localStorage.removeItem(REFRESH_TOKEN);
+          dispatch(setLoggedIn(false));
+          navigate('/');
+        } else {
+          response
+            .json()
+            .then((err) => {
+              console.error(
+                '로그아웃 실패:',
+                err.message || '서버에서 에러가 발생했습니다.',
+              );
+            })
+            .catch((jsonError) => {
+              console.error('응답 파싱 에러:', jsonError);
+            });
+        }
+      })
+      .catch((error) => {
+        console.error('네트워크 에러 또는 요청 실패:', error.message);
+      });
   };
 
   return (
@@ -117,6 +145,7 @@ function UserInfoHeader() {
       <div className="userInfo-container">
         {isLoggedIn ? (
           <div className="user-icon-container" ref={dropdownRef}>
+            {/* 붕어빵 */}
             <div className="reward-fish">
               <img
                 className="reward"
@@ -125,13 +154,15 @@ function UserInfoHeader() {
                 alt="붕어빵 아이콘"
               />
               <span className="bun-count">{rewardCount}</span>
+              <img
+                className="loginuser"
+                src={Loginuser}
+                alt="로그인 유저 아이콘"
+                onClick={handleUserIconClick}
+              />
             </div>
-            <img
-              className="loginuser"
-              src={Loginuser}
-              alt="로그인 유저 아이콘"
-              onClick={handleUserIconClick}
-            />
+            {/* 유저 아이콘 */}
+
             {isDropdownOpen && (
               <div className="dropdown-menu">
                 <ul>

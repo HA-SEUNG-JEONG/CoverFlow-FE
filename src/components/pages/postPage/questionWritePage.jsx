@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { StyledPage, StyledHeader } from '../../../styledComponent.js';
-import TitleHeader from '../../ui/header/titleHeader.jsx';
+import TitleHeader from '../../ui/header/titleHeader';
 import TabBar from '../../ui/tabBar/tabBar.jsx';
+import TagInput from '../../ui/selection/fishTag.jsx';
 import '../../../asset/sass/pages/postPage/questionWritePage.scss';
 import { BASE_URL, ACCESS_TOKEN } from '../../global/constants/index.js';
+import { toast } from 'react-toastify';
 
 function QuestionWritePage() {
   const navigate = useNavigate();
@@ -25,38 +27,31 @@ function QuestionWritePage() {
     setTitle(e.target.value);
   };
 
-  const handleRewardChange = (e) => {
-    setReward(e.target.value);
-  };
-
   const handleRegister = async () => {
-    console.log(title, companyId, content, reward);
-
     try {
-      const response = await fetch(`${BASE_URL}/api/question/save-question`, {
+      const response = await fetch(`${BASE_URL}/api/question`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN)}`,
         },
         body: JSON.stringify({
-          title: title,
-          content: content,
-          companyId: parseInt(companyId),
-          reward: parseInt(reward),
+          title,
+          content,
+          companyId: Number(companyId),
+          reward: Number(reward),
         }),
       });
 
       if (response.ok) {
-        const result = await response.json();
-        console.log('등록 성공:', result);
-        alert('질문이 등록되었습니다');
+        await response.json();
+        toast.success('질문이 등록되었습니다');
         navigate('/company-info/:companyId');
       } else {
         throw new Error('서버 에러');
       }
     } catch (error) {
-      console.error('등록 실패:', error);
+      toast.error('등록 실패:', error);
     }
   };
 
@@ -65,15 +60,6 @@ function QuestionWritePage() {
       <StyledHeader>
         <TitleHeader pageTitle="질문 등록" handleGoBack={handleGoBack} />
         <div className="info-questionWrite"></div>
-        {/* <div className="compnayID">{companyId}</div> */}
-        <select name="reward" value={reward} onChange={handleRewardChange}>
-          <option value={0}>보상으로 걸 붕어빵의 수를 정하세요 </option>
-          {[10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((value) => (
-            <option key={value} value={value}>
-              {value} 붕어빵
-            </option>
-          ))}
-        </select>
         <input
           className="question-title-input"
           placeholder="질문 제목 입력.."
@@ -88,6 +74,7 @@ function QuestionWritePage() {
           value={content}
           onChange={handleInputChange}
         ></textarea>
+        <TagInput reward={reward} setReward={setReward} />
         <button className="register-button" onClick={handleRegister}>
           등록
         </button>

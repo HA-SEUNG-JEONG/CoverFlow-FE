@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
-import { StyledPage, StyledHeader } from '../../../styledComponent.js';
-import TitleHeader from '../../ui/header/titleHeader.jsx';
+import TitleHeader from '../../ui/header/titleHeader.tsx';
 import UserInfoHeader from '../../ui/header/userInfoHeader.jsx';
-import SearchInput from '../../ui/searchInput/searchInput.jsx';
-import TabBar from '../../ui/tabBar/tabBar.jsx';
+import TabBar from '../../ui/tabBar/tabBar.tsx';
 import '../../../asset/sass/pages/searchPage/companyInfoPage.scss';
 import Question from '../../ui/question/question.jsx';
-import { ACCESS_TOKEN, BASE_URL } from '../../global/constants/index.js';
+import { ACCESS_TOKEN, BASE_URL } from '../../global/constants/index.ts';
+import { StyledHeader, StyledPage } from '../../../styledComponent.ts';
+import SearchInput from '../../ui/searchInput/searchInput.tsx';
 
 const CompanyContainer = styled.div`
   background-color: #ffffff;
@@ -24,15 +24,13 @@ const CompanyName = styled.div`
   font-size: 20px;
   letter-spacing: -1px;
   font-weight: 800;
-  padding-left: 50px;
 `;
 
 const CompanyType = styled.div`
   font-size: 13px;
   color: cecece;
   letter-spacing: -1px;
-  margin-right: 20px;
-  padding-left: 50px;
+  margin-top: 3%;
 `;
 
 const Line = styled.div`
@@ -43,12 +41,10 @@ const Line = styled.div`
 `;
 
 const CompanyAddress = styled.div`
-  padding-right: 50px;
+  margin-right: 12%;
 `;
 
-const CompanyEstablishment = styled.div`
-  padding-left: 50px;
-`;
+const CompanyEstablishment = styled.div``;
 
 const QuestionButton = styled.button`
   letter-spacing: -0.7px;
@@ -77,11 +73,10 @@ function CompanyInfoPage() {
   localStorage.setItem('prevPage', window.location.pathname);
 
   useEffect(() => {
-    console.log('회사 companyId: ', companyId);
     async function fetchCompanyData() {
       try {
         const response = await fetch(
-          `${BASE_URL}/api/company/find-company/${companyId}`,
+          `${BASE_URL}/api/company/${companyId}?pageNo=0`,
           {
             method: 'GET',
             headers: {
@@ -89,11 +84,11 @@ function CompanyInfoPage() {
             },
           },
         );
-        const data = await response.json();
 
-        if (response.ok && data.data) {
-          setCompanyData(data.data);
-          console.log('회사 데이터:', data.data);
+        const { data } = await response.json();
+
+        if (response.ok && data) {
+          setCompanyData(data);
         } else {
           throw new Error('데이터가 존재하지 않습니다.');
         }
@@ -120,7 +115,7 @@ function CompanyInfoPage() {
 
     if (token) {
       navigate(`/company-info/${companyId}/question-write`);
-    } else if(confirm('로그인이 필요합니다. 로그인 하시겠습니까?') === true){
+    } else if (confirm('로그인이 필요합니다. 로그인 하시겠습니까?') === true) {
       navigate(`/login`);
     }
   };
@@ -143,14 +138,14 @@ function CompanyInfoPage() {
           <CompanyContainer>
             <div className="company">
               <div className="main-company-info">
-                <CompanyName>{companyData.companyName}</CompanyName>
-                <CompanyType>{companyData.type}</CompanyType>
+                <CompanyName>{companyData?.companyName}</CompanyName>
+                <CompanyType>{companyData?.type}</CompanyType>
               </div>
 
               <div className="sub-info">
                 <CompanyAddress>{companyData.address}</CompanyAddress>
                 <CompanyEstablishment>
-                  {companyData.establishment}
+                  {companyData.companyEstablishment}
                 </CompanyEstablishment>
               </div>
             </div>
@@ -166,21 +161,19 @@ function CompanyInfoPage() {
           </div>
 
           <QuestionList>
-            {companyData.questions.map((question, index) => (
-                <Question
-                  key={index}
-                  companyId={companyId}
-                  questionId={question.questionId.toString()}
-                  questioner={question.nickname}
-                  questionerTag={question.tag}
-                  viewCount={question.viewCount.toString()}
-                  answerCount={question.answerCount.toString()}
-                  questionTitle={question.title}
-                  questionContent={question.content}
-                  createAt={question.createAt}
-                />
-              ))
-            }
+            {companyData?.questions.map((question, index) => (
+              <Question
+                key={index}
+                companyId={companyId}
+                questionId={question.questionId}
+                questioner={question.questionerNickname}
+                questionerTag={question.questionerTag}
+                answerCount={question.answerCount}
+                questionTitle={question.questionTitle}
+                questionContent={question.questionContent}
+                createAt={question.createAt}
+              />
+            ))}
           </QuestionList>
         </>
       )}
