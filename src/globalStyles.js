@@ -11,6 +11,7 @@ const GlobalStyles = createGlobalStyle`
 		box-sizing: border-box;
   }
   html {
+    font-size: 10px;
     font-family: 'Pretendard-Regular';
   }
   body {
@@ -23,6 +24,9 @@ const GlobalStyles = createGlobalStyle`
   a {
     text-decoration: none;
   }
+  
+  a:visited { text-decoration: none; }
+
 
   button {
     cursor: pointer;
@@ -33,7 +37,7 @@ const GlobalStyles = createGlobalStyle`
     height: 100vh;
     width: 700px;
     background-color: #ffffff;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
     font-size: 16px;
     margin: 0 auto;
     padding: 0.5%;

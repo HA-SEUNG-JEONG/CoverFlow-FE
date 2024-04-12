@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PropTypes from 'prop-types';
 import '../../../asset/sass/etc/question/question.scss';
 import styled, { css } from 'styled-components';
 import Chat from '../../../asset/image/chat.svg';
 import View from '../../../asset/image/view.svg';
 import Questitle from '../../../asset/image/questitle.svg';
 import { ACCESS_TOKEN } from '../../global/constants/index.ts';
+import Tree from '../../../asset/image/nature-ecology-tree-3--tree-plant-cloud-shape-park.svg';
 
 const Line = styled.div`
   height: 1px;
@@ -39,9 +39,7 @@ const LoginButton = styled.button`
 //     `}
 // `;
 
-const ContentBlur = styled.span.attrs(({ $isLoggedIn }) => ({
-  $isLoggedIn,
-}))`
+const ContentBlur = styled.span<{ $isLoggedIn: boolean }>`
   ${({ $isLoggedIn }) =>
     !$isLoggedIn &&
     css`
@@ -66,13 +64,25 @@ function truncateContent(questionContent, maxLength = 30) {
     : questionContent;
 }
 
-function formatDate(fullDate) {
+function formatDate(fullDate: string) {
   const date = new Date(fullDate);
   const year = date.getFullYear();
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const day = date.getDate().toString().padStart(2, '0');
 
   return `${year}-${month}-${day}`;
+}
+
+interface QuestionModulesProps {
+  companyId?: string;
+  questionId: number;
+  questioner: string;
+  questionerTag: string;
+  answerCount: number;
+  questionTitle: string;
+  createAt: string;
+  questionContent: string;
+  reward: number;
 }
 
 function QuestionModule({
@@ -84,7 +94,8 @@ function QuestionModule({
   questionTitle,
   questionContent,
   createAt,
-}) {
+  reward,
+}: QuestionModulesProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
 
@@ -93,19 +104,18 @@ function QuestionModule({
   };
 
   const goToDetail = () => {
-    navigate(
-      `/company-info/${companyId}/${questionId}`,
-      // state: {
-      //   questionId,
-      //   questioner,
-      //   questionerTag,
-      //   viewCount,
-      //   answerCount,
-      //   questionTitle,
-      //   questionContent,
-      //   createAt,
-      // },
-    );
+    navigate(`/company-info/${companyId}/${questionId}`, {
+      state: {
+        questionId,
+        questioner,
+        questionerTag,
+        answerCount,
+        questionTitle,
+        questionContent,
+        createAt,
+        reward,
+      },
+    });
   };
 
   useEffect(() => {
@@ -150,24 +160,18 @@ function QuestionModule({
         <div className="question-container">
           <div className="questioner-container">
             <div className="questioner-info">
+              <img src={Tree} alt="tree" />
               <span className="questioner">{questioner}</span>
-              <span className="middle">•</span>
-              <span className="questioner-tag">{questionerTag}</span>
+              <span className="question-answer-day">{formattedDate}</span>
             </div>
           </div>
 
-          <div className="view-container">
-            <img className="chat-img" src={Chat} />
-            <span className="chat-count">{answerCount}</span>
-
-            <img className="view-img" src={View} />
-          </div>
           <div className="field">
-            <span className="question-title">
-              {truncateTitle(questionTitle)}
-            </span>
-
             <ContentBlur $isLoggedIn={isLoggedIn}>
+              <span className="question-title">
+                <div className="reward">{reward}</div>
+                {truncateTitle(questionTitle)}
+              </span>
               <span className="question-content">{questionContent}</span>
             </ContentBlur>
 
@@ -176,8 +180,6 @@ function QuestionModule({
               더 자세한 정보를 열람하세요{' '}
             </span>
             <LoginButton onClick={handleLoginClick}>로그인</LoginButton>
-
-            <span className="question-answer-day">{formattedDate}</span>
           </div>
         </div>
       )}
@@ -185,17 +187,5 @@ function QuestionModule({
     </>
   );
 }
-
-QuestionModule.propTypes = {
-  companyId: PropTypes.string.isRequired,
-  questionId: PropTypes.string.isRequired,
-  questioner: PropTypes.string.isRequired,
-  questionerTag: PropTypes.string.isRequired,
-  answerCount: PropTypes.number.isRequired,
-  createAt: PropTypes.string.isRequired,
-  questionContent: PropTypes.string.isRequired,
-  questionTitle: PropTypes.string.isRequired,
-  isLoggedIn: PropTypes.bool,
-};
 
 export default QuestionModule;

@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import '../../../asset/sass/pages/myPage/myPage.scss';
+import MyAnswer from '../../ui/myPageSelection/myAnswer';
+import MyQuestion from '../../ui/myPageSelection/myQuestion';
 
 import { ReactComponent as StoreIcon } from '../../../asset/image/store.svg';
 import { ReactComponent as EditIcon } from '../../../asset/image/edit.svg';
@@ -10,58 +12,33 @@ import { ReactComponent as PremiumIcon } from '../../../asset/image/premium.svg'
 import { ReactComponent as NoticeIcon } from '../../../asset/image/notice.svg';
 
 import { StyledHeader, StyledPage } from '../../../styledComponent';
-
-import { ACCESS_TOKEN, REFRESH_TOKEN, BASE_URL } from '../../global/constants';
+import { fetchAPI } from '../../global/utils/apiUtil';
+import { ACCESS_TOKEN } from '../../global/constants';
 import TabBar from '../../ui/tabBar/tabBar';
 import TitleHeader from '../../ui/header/titleHeader';
-import { toast } from 'react-toastify';
-
-/* 스타일 컴포넌트 정의 */
-const LogoutButton = styled.button`
-  font-size: 14px;
-  position: fixed;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 8px 16px;
-  background-color: #f44336;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-`;
-
-// const PremiunButton = styled.button`
-//   white-space: nowrap;
-//   padding: 7px;
-//   width: auto;
-//   font-size: 12px;
-//   border-radius: 1px;
-//   margin: 2% 0% 0% 12%;
-//   &:hover {
-//     cursor: pointer;
-//   }
-// `;
+import { showErrorToast } from '../../ui/toast/toast';
+// import { useDispatch } from 'react-redux';
 
 const StatusBar = styled.div`
   display: flex;
   justify-content: space-between;
-  border-top: 0.5rem solid rgba(255, 249, 244, 1);
+  border-top: 8px solid rgba(255, 249, 244, 1);
   margin: 10% auto 0 auto;
   font-family: pretendard-semibold;
-  width: 75%;
+  width: 520px;
 `;
 
 const StatusTab = styled.div<{ current: boolean }>`
-  width: 50%;
+  width: 260px;
   letter-spacing: -1px;
   text-align: center;
   padding: 15px 0;
-  margin-top: -0.5rem;
+  margin-top: -8px;
   cursor: pointer;
   color: gray;
+  font-family: Pretendard-Bold;
   border-top: 8px solid transparent;
-  font-size: 1.2rem;
+  font-size: 2rem;
   transition:
     border-top 0.3s ease-in-out,
     color 0.3s ease-in-out;
@@ -75,7 +52,13 @@ const StatusTab = styled.div<{ current: boolean }>`
 function Mypage() {
   const [currentCategory, setCurrentCategory] = useState('comments');
   const [nickname, setNickname] = useState('');
+  const [socialType, setSocialType] = useState('');
+  const [question, setQuestion] = useState([]);
+  const [answer, setAnswer] = useState([]);
+  const [questionCnt, setQuestionCnt] = useState(0);
+  const [answerCnt, setAnswerCnt] = useState(0);
   const navigate = useNavigate();
+  // const dispatch = useDispatch();
 
   /* 사용자의 토큰이 존재한다면, 사용자의 정보를 가져옵니다. */
   useEffect(() => {
@@ -88,65 +71,61 @@ function Mypage() {
     } else {
       console.log('사용자 정보 로딩 시작');
       loadUserData();
+      loadUserAnswer();
+      loadUserQuestion();
     }
   }, [navigate]);
 
   /* 사용자의 닉네임과 붕어빵 개수를 불러옵니다. */
-  const loadUserData = () => {
-    fetch(`${BASE_URL}/api/member`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN)}`,
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log('사용자 정보:', data);
-        setNickname(data.nickname);
-      })
-      .catch((error) => toast.error('회원 정보 불러오기 실패:', error));
+  const loadUserData = async () => {
+    try {
+      const data = await fetchAPI('/api/member/me', 'GET');
+      console.log('사용자 정보:', data);
+      setNickname(data.data.nickname);
+      mySocialType(data.data.socialType);
+    } catch (error) {
+      showErrorToast('회원 정보 불러오기 실패');
+    }
   };
 
-  /* 로그아웃 버튼을 클릭했을 경우, 서버로 로그아웃 API를 요청한 후,
-      클라이언트 측에서 리프레쉬 토큰과 엑세스 토큰을 삭제하고 메인 페이지로 돌아갑니다. */
-  const handleLogout = () => {
-    console.log('로그아웃 요청 시작');
-    fetch(`${BASE_URL}/api/member/logout`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN)}`,
-      },
-    })
-      .then((response) => {
-        if (response.ok) {
-          console.log('로그아웃 성공');
-          localStorage.removeItem(ACCESS_TOKEN);
-          localStorage.removeItem(REFRESH_TOKEN);
-          navigate('/');
-        } else {
-          response
-            .json()
-            .then((err) => {
-              console.error(
-                '로그아웃 실패:',
-                err.message || '서버에서 에러가 발생했습니다.',
-              );
-            })
-            .catch((jsonError) => {
-              console.error('응답 파싱 에러:', jsonError);
-            });
-        }
-      })
-      .catch((error) => {
-        console.error('네트워크 에러 또는 요청 실패:', error.message);
-      });
+  const loadUserAnswer = async () => {
+    try {
+      const data = await fetchAPI(
+        '/api/answer/me?pageNo=0&criterion=createdAt',
+        'GET',
+      );
+      setAnswer(data.data.answers);
+      setAnswerCnt(data.data.totalElements);
+    } catch (error) {
+      showErrorToast('답변 불러오기에 실패했습니다.');
+    }
   };
 
-  /* 뒤로가기 눌렀을 경우, 한 페이지 뒤로 가는 로직입니다. */
+  const loadUserQuestion = async () => {
+    try {
+      const data = await fetchAPI(
+        '/api/question/me?pageNo=0&criterion=createdAt',
+        'GET',
+      );
+      setQuestion(data.data.questions);
+      setQuestionCnt(data.data.totalElements);
+    } catch (error) {
+      showErrorToast('질문 불러오기에 실패했습니다.');
+    }
+  };
+
+  const mySocialType = (socialType: string) => {
+    if (socialType === 'KAKAO') {
+      setSocialType('카카오');
+    } else if (socialType === 'NAVER') {
+      setSocialType('네이버');
+    } else if (socialType === 'GOOGLE') {
+      setSocialType('구글');
+    }
+  };
+
   const handleGoBack = () => {
-    navigate(-1);
+    navigate('/');
   };
 
   const goToContact = () => {
@@ -170,36 +149,29 @@ function Mypage() {
         <StyledHeader>
           <TitleHeader pageTitle="마이 페이지" handleGoBack={handleGoBack} />
 
-          <div className="title-container">
-            <div className="title">
-              {nickname}지루한 감자튀김
-              <span className="title-intro">님, 안녕하세요</span>
-            </div>
-            <span className="login-status">카카오 로그인 사용 중</span>
+          <div className="title">
+            {nickname}
+            <span className="title-intro">님, 안녕하세요</span>
+            <p className="my-social-type"> {socialType} 로그인 사용중</p>
           </div>
-          {/* <PremiunButton
-            className="premium-button"
-            onClick={handlePremiumButtonClick}
-          >
-            프리미엄 이용하기
-          </PremiunButton> */}
+
           <div className="mypage-select-menu">
             <div className="menu" onClick={goToContact}>
               <NoticeIcon />
               <div className="letter">문의하기</div>
             </div>
 
-            <div className="menu-contact" onClick={goToStore}>
+            <div className="menu" onClick={goToStore}>
               <StoreIcon />
               <div className="letter">상점</div>
             </div>
 
-            <div className="menu-event" onClick={goToPremium}>
+            <div className="menu" onClick={goToPremium}>
               <PremiumIcon />
               <div className="letter">프리미엄</div>
             </div>
 
-            <div className="menu-edit" onClick={goToEdit}>
+            <div className="menu" onClick={goToEdit}>
               <EditIcon />
               <div className="letter">내 정보 수정</div>
             </div>
@@ -210,20 +182,25 @@ function Mypage() {
               current={currentCategory === 'comments'}
               onClick={() => setCurrentCategory('comments')}
             >
-              내가 남긴 질문
+              내가 남긴 질문<span className="my-cnt">{questionCnt}</span>
             </StatusTab>
             <StatusTab
               current={currentCategory === 'posts'}
               onClick={() => setCurrentCategory('posts')}
             >
-              내가 남긴 답변
+              내가 남긴 답변<span className="my-cnt">{answerCnt}</span>
             </StatusTab>
           </StatusBar>
 
-          {currentCategory === 'comments' ? <div></div> : <div></div>}
-          <LogoutButton className="logout-button" onClick={handleLogout}>
-            로그아웃
-          </LogoutButton>
+          {currentCategory === 'comments' ? (
+            <MyQuestion
+              setQuestionCnt={setQuestionCnt}
+              initiateQuestion={question}
+            />
+          ) : (
+            <MyAnswer setAnswerCnt={setAnswerCnt} initiateAnswer={answer} />
+          )}
+
           <TabBar />
         </StyledHeader>
       </StyledPage>

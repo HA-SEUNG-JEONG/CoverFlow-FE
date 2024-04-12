@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import '../../../asset/sass/pages/postPage/questionWritePage.scss';
-import { BASE_URL } from '../../global/constants';
-import { toast } from 'react-toastify';
 import TagInput from '../../ui/selection/fishTag';
 import TitleHeader from '../../ui/header/titleHeader';
 import TabBar from '../../ui/tabBar/tabBar';
@@ -10,10 +8,11 @@ import { StyledHeader, StyledPage } from '../../../styledComponent';
 import Finger from '../../../asset/image/fingerprint.svg';
 // import Home from '../../../asset/image/group.svg';
 import Money from '../../../asset/image/money.svg';
-import axios from 'axios';
-
+import { showErrorToast, showSuccessToast } from '../../ui/toast/toast';
+import { fetchAPI } from '../../global/utils/apiUtil';
 function QuestionWritePage() {
   const navigate = useNavigate();
+  const { state } = useLocation();
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
   const [reward, setReward] = useState(0);
@@ -22,11 +21,11 @@ function QuestionWritePage() {
   const { companyId } = useParams();
 
   const tagName = [
-    '사내 문화가 궁금해요',
-    '급여 정보가 궁금해요',
-    '업무 방식이 궁금해요',
-    '승진이나 커리어가 궁금해요',
-    '직무,워라밸이 궁금해요',
+    { name: '사내 문화가 궁금해요', value: 'CULTURE' },
+    { name: '급여 정보가 궁금해요', value: 'SALARY' },
+    { name: '업무 방식이 궁금해요', value: 'BUSINESS' },
+    { name: '승진이나 커리어가 궁금해요', value: 'CAREER' },
+    { name: '직무,워라밸이 궁금해요', value: 'WORKLIFEBALANCE' },
   ];
   const categoryName = [
     '서비스',
@@ -50,32 +49,48 @@ function QuestionWritePage() {
     setTitle(event.target.value);
   };
 
+  const isRequired = (
+    category: string,
+    tag: string,
+    title: string,
+    content: string,
+    reward: number,
+  ): boolean => {
+    return (
+      Boolean(category) &&
+      Boolean(tag) &&
+      Boolean(title) &&
+      Boolean(content) &&
+      Boolean(reward)
+    );
+  };
+
   const handleRegister = async () => {
     try {
-      const response: Response = await axios.post(`${BASE_URL}/api/question`, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-        },
-        body: JSON.stringify({
-          questionTag,
-          questionCategory,
-          title,
-          content,
-          companyId: Number(companyId),
-          reward: Number(reward),
-        }),
-      });
+      const body = {
+        questionTag,
+        questionCategory,
+        title,
+        content,
+        companyId: Number(companyId),
+        reward: Number(reward),
+      };
+      const isValid = Object.values(body).every(
+        (value) => value !== null && value !== '',
+      );
 
-      if (response.ok) {
-        await response.json();
-        toast.success('질문이 등록되었습니다');
-        navigate('/company-info/:companyId');
+      if (!isValid) {
+        throw new Error('모든 필드를 채워주세요.');
       } else {
-        throw new Error('서버 에러');
+        await fetchAPI('/api/question', 'POST', body);
+
+        showSuccessToast('질문이 등록되었습니다');
+
+        navigate(`/company-info/${companyId}`);
       }
     } catch (error) {
-      if (error instanceof Error) toast.error(error.message);
+      console.log(error);
+      showErrorToast(`에러 발생 ${error}`);
     }
   };
 
@@ -91,9 +106,8 @@ function QuestionWritePage() {
     <StyledPage className="main-page-container">
       <StyledHeader>
         <TitleHeader pageTitle="질문 등록" handleGoBack={handleGoBack} />
-        {/* <div className="info-questionWrite"></div> */}
         <div className="company-name">
-          <span>아모레퍼시픽</span>
+          <span>{state}</span>
         </div>
 
         <div className="tag-container">
@@ -104,32 +118,16 @@ function QuestionWritePage() {
         </div>
 
         <div className="tag-select-wrapper">
-          {tagName.map((tag, index) => (
+          {tagName.map((tag) => (
             <div
-              className={`tag-select ${questionTag === tag ? 'selected' : ''} `}
-              key={index}
-              onClick={() => handleTagSelect(tag)}
+              className={`tag-select ${questionTag === tag.value ? 'selected' : ''} `}
+              key={tag.value}
+              onClick={() => handleTagSelect(tag.value)}
             >
               <img src={Money} alt="money" />
-              <span>{tag}</span>
+              <span>{tag.name}</span>
             </div>
           ))}
-          {/* <div className="tag-select">
-            <img src={Money} alt="money" />
-            <span>급여 정보가 궁금해요</span>
-          </div>
-          <div className="tag-select">
-            <img src={Money} alt="money" />
-            <span>업무 방식이 궁금해요</span>
-          </div>
-          <div className="tag-select">
-            <img src={Money} alt="money" />
-            <span>승진이나 커리어가 궁금해요</span>
-          </div>
-          <div className="tag-select">
-            <img src={Money} alt="money" />
-            <span>직무,워라밸이 궁금해요</span>
-          </div> */}
         </div>
 
         <div className="category-container">
@@ -150,18 +148,6 @@ function QuestionWritePage() {
               <span>{category}</span>
             </div>
           ))}
-          {/* <div className="category-select">
-            <span>개발/데이터</span>
-          </div>
-          <div className="category-select">
-            <span>마케팅/광고</span>
-          </div>
-          <div className="category-select">
-            <span>생산/제조</span>
-          </div>
-          <div className="category-select">
-            <span>기타</span>
-          </div> */}
         </div>
         <input
           className="question-title-input"
@@ -183,7 +169,10 @@ function QuestionWritePage() {
           cols={40}
         ></textarea>
         <TagInput reward={reward} setReward={setReward} />
-        <button className="register-question-button" onClick={handleRegister}>
+        <button
+          className={`register-question-button ${isRequired(questionCategory, questionTag, title, content, reward) ? 'selected' : ''}`}
+          onClick={handleRegister}
+        >
           등록
         </button>
       </StyledHeader>

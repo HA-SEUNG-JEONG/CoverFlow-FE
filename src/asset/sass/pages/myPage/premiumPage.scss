@@ -13,7 +13,7 @@
 
 .banner {
   display: flex;
-  width: 70%;
+  width: 100%;
 }
 
 .banner-text {
@@ -26,6 +26,7 @@
   &:nth-child(0) span,
   &:nth-child(1) span {
     font-weight: bolder;
+    font-size: large;
   }
 }
 
@@ -41,10 +42,16 @@
   }
 }
 
-.button {
+.payment-button {
   display: flex;
   justify-content: center;
   margin-right: 0;
+
+  &.selected {
+    border: 2px solid #ff8d1d;
+    background-color: #ff8d1d;
+    color: #ffffff;
+  }
 }
 
 .tag {
@@ -84,7 +91,7 @@
   }
 }
 
-.company {
+.premium-company {
   color: #5b5b5b;
   letter-spacing: -1.5px;
   margin-top: 4px;

@@ -1,17 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { StyledPage, StyledHeader } from '../../../styledComponent.ts';
 import TitleHeader from '../../ui/header/titleHeader.tsx';
 import styled from 'styled-components';
 import TabBar from '../../ui/tabBar/tabBar.tsx';
 
-import '../../../asset/sass/pages/searchPage/searchResultPage.scss';
 import { BASE_URL } from '../../global/constants/index.ts';
+import '../../../asset/sass/pages/searchPage/searchResultPage.scss';
 import Plus from '../../../asset/image/plus.svg';
-import Warning from '../../../asset/image/warning.svg';
-import { toast } from 'react-toastify';
+import Warning from '../../../asset/image/warning-triangle.svg';
 import '../../../asset/sass/pages/notificationPage/notificationPage.scss';
 import SearchInput from '../../ui/searchInput/searchInput.tsx';
+import { showErrorToast } from '../../ui/toast/toast.tsx';
+import Pagination from '../../ui/Pagination.tsx';
 
 const ResultsContainer = styled.div`
   position: relative;
@@ -22,13 +23,8 @@ const ResultItem = styled.li`
   font-size: 18px;
   letter-spacing: -1px;
   list-style: none;
-  padding: 20px 20px;
-  background-color: #ffffff;
-  border: 1.5px solid #eaeaea;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.05),
-    0 1px 2px rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
+  padding: 1.2rem;
+  border-bottom: 1px solid #d0d0d0;
   transition: all 0.3s ease-in-out;
   cursor: pointer;
   display: flex;
@@ -58,21 +54,19 @@ const ResultItem = styled.li`
   }
 `;
 
+const IndustryTagContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
 const IndustryTag = styled.span`
   color: #9b9898;
   font-size: 12px;
   margin: 10% 0% 0% -1%;
 `;
 
-const Line = styled.div`
-  height: 13px;
-  background-color: #f2f2f2;
-  width: 103%;
-  margin: 6% 0% 0% -1.5%;
-`;
-
 const ResultsList = styled.ul`
-  padding: 10;
+  padding: 0.6rem;
   margin-top: 8%;
   width: 80%;
   margin-left: 10%;
@@ -94,7 +88,14 @@ const QuestionCount = styled.div`
   flex-shrink: 0;
   color: #428238;
   font-weight: 600;
-
+  background-color: #ffffff;
+  border: 1.5px solid #eaeaea;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.1);
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.6rem;
+  border-bottom: #d9d9d9;
   &::before {
     content: '질문 수';
     display: block;
@@ -112,66 +113,86 @@ const QuestionCount = styled.div`
 `;
 
 interface SearchResultProps {
+  state: {
+    searchResults: {
+      companyId: number;
+      companyName: string;
+      companyType: string;
+      questionCount: number;
+    }[];
+  };
+}
+
+interface SearchDataProps {
+  companyAddress: string;
   companyId: number;
   companyName: string;
+  companyStatus: 'EXAMINATION' | 'REGISTRATION' | 'DELETION';
   companyType: string;
   questionCount: number;
 }
 
+export type PageProps = 'prev' | 'next';
+
 function SearchResultPage() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const keyword = queryParams.get('keyword');
-  const [searchResult, setSearchResult] = useState<SearchResultProps[]>([]);
+  const [searchParams] = useSearchParams();
+  const keyword = searchParams.get('keyword');
+
+  const {
+    state: { searchResults },
+  } = useLocation() as SearchResultProps;
+  const [searchData, setSearchData] = useState<SearchDataProps[]>([]);
+  const companyList = searchResults.map((result) => result);
+  const companyName = companyList.map((list) => list.companyName);
+  // const keyword = queryParams.get('keyword');
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = Array.from(searchResult)?.slice(
-    indexOfFirstItem,
-    indexOfLastItem,
-  );
+  // const indexOfLastItem = currentPage * itemsPerPage;
+  // const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  // const currentItems = Array.from(searchResults)?.slice(
+  //   indexOfFirstItem,
+  //   indexOfLastItem,
+  // );
 
-  const totalPages = Math.ceil(searchResult.length / itemsPerPage);
+  const totalPages = Math.ceil(searchResults.length / itemsPerPage);
 
   const handleGoBack = () => {
-    navigate(-1);
+    navigate('/search-company');
   };
 
   useEffect(() => {
-    async function fetchData() {
+    const fetchData = async () => {
+      if (!keyword) return;
       try {
         const response = await fetch(
-          `${BASE_URL}/api/company?pageNo=1&name=${keyword}`,
+          `${BASE_URL}/api/company?pageNo=0&name=${keyword}`,
           {
             method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
           },
         );
-        const { data } = await response.json();
-        if (response.ok) {
-          setSearchResult(data.companyList);
-        }
+        const data = await response.json();
+        setSearchData(data.data.companyList);
+        console.log('페이지 내 결과', data.data.companyList);
       } catch (error) {
-        if (error instanceof Error) toast.error(error.message);
+        showErrorToast(`오류가 여기서발생: ${error}`);
+        setSearchData([]);
       }
-    }
+    };
 
     fetchData();
-  }, [location.search]);
+  }, [keyword]);
 
   const goToResultDetailPage = (companyId: number) => {
     navigate(`/company-info/${companyId}`);
   };
 
-  const handlePagination = (type: 'prev' | 'next') => {
-    if (type === 'prev') {
+  const handlePagination = (type: PageProps) => {
+    if (type === 'prev' && currentPage > 0) {
       setCurrentPage(currentPage - 1);
-    } else if (type === 'next') {
+    } else if (type === 'next' && currentPage < totalPages - 1) {
       setCurrentPage(currentPage + 1);
     }
   };
@@ -182,28 +203,22 @@ function SearchResultPage() {
         <ResultsContainer>
           <TitleHeader pageTitle="검색 결과" handleGoBack={handleGoBack} />
           <SearchInput />
-          <Line />
           <ResultCount>
-            기업 검색 결과{' '}
-            <span className="result-count">{searchResult.length}</span>
+            기업 검색 결과
+            <span className="result-count">{companyName.length}</span>
           </ResultCount>
           <ResultsList>
-            {currentItems.length > 0 ? (
-              currentItems.map((data) => (
+            {searchData ? (
+              searchData.map((item) => (
                 <ResultItem
-                  key={data.companyId}
-                  onClick={() => goToResultDetailPage(data.companyId)}
+                  key={item.companyId}
+                  onClick={() => goToResultDetailPage(item.companyId)}
                 >
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                    }}
-                  >
-                    <span>{data.companyName}</span>
-                    <IndustryTag>업종 : {data.companyType}</IndustryTag>
-                  </div>
-                  <QuestionCount>{data.questionCount}</QuestionCount>
+                  <IndustryTagContainer>
+                    <span>{item.companyName}</span>
+                    <IndustryTag>업종 : {item.companyType}</IndustryTag>
+                  </IndustryTagContainer>
+                  <QuestionCount>{item.questionCount}</QuestionCount>
                 </ResultItem>
               ))
             ) : (
@@ -213,7 +228,7 @@ function SearchResultPage() {
                   src={Warning}
                   alt="Warning Icon"
                 />
-                <div className="failed-text">검색 결과가 없습니다</div>
+                <div className="failed-text">검색 결과가 없습니다.</div>
                 <div className="failed-text2">
                   코버플로우에 원하는 기업을 등록해 주세요
                 </div>
@@ -227,59 +242,13 @@ function SearchResultPage() {
               </span>
             )}
           </ResultsList>
-          {totalPages >= 1 && (
-            <div className="button-container">
-              <div
-                // disabled={currentGroup === 0}
-                style={{ cursor: 'pointer' }}
-                onClick={() => handlePagination('prev')}
-              >
-                <svg
-                  width="8"
-                  height="15"
-                  viewBox="0 0 6 10"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M5 9L1 5L5 1"
-                    stroke="#1D1D1F"
-                    strokeWidth="0.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-              {[...Array(totalPages)].map((_, index) => (
-                <div
-                  className={`notice-button ${currentPage === index + 1 ? 'active-item' : ''}`}
-                  key={index}
-                >
-                  {index + 1}
-                </div>
-              ))}
-              <div
-                style={{ cursor: 'pointer' }}
-                onClick={() => handlePagination('next')}
-                // disabled={currentGroup === totalGroup - 1}
-              >
-                <svg
-                  width="8"
-                  height="15"
-                  viewBox="0 0 6 10"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M1 9L5 5L1 1"
-                    stroke="#1D1D1F"
-                    strokeWidth="0.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-            </div>
+
+          {totalPages > 1 && (
+            <Pagination
+              totalPages={totalPages}
+              currentPage={currentPage}
+              handlePagination={handlePagination}
+            />
           )}
         </ResultsContainer>
         <TabBar />

@@ -1,26 +1,26 @@
 .sidebar {
-  background-color: #3838381e;
+  background-color: #1919196a;
   width: 700px;
   height: 100%;
   margin-left: -0.5%;
-  margin-top: -3%;
+  margin-top: -7rem;
   position: absolute;
+  z-index: 119;
 }
 .sidebar-content {
-  width: 50%;
-  background-color: white;
+  width: 35rem;
+  background-color: #ffffff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   height: 100%;
-  border-radius: 0 4rem 0 0;
+  border-radius: 0 10rem 0 0;
   position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
-  z-index: 5;
+  z-index: 120;
 }
 .sidebar-info {
   margin-top: 50%;
-  margin-left: 10%;
   letter-spacing: -1px;
 }
 
@@ -31,8 +31,8 @@
 
 .sidebar-menu {
   list-style: none;
-  height: 20%;
-  margin-top: 30%;
+  height: 25%;
+  margin-top: 20%;
   font-size: 16px;
   letter-spacing: -1px;
   font-family: pretendard-medium;
@@ -59,4 +59,21 @@
   display: flex;
   justify-content: flex-start;
   align-items: center;
+  color: black;
+  font-size: 2.3rem;
+  font-family: Pretendard-Medium;
+  letter-spacing: -1.2px;
+}
+
+.logo-subtitle {
+  font-size: 3rem;
+  letter-spacing: -1.2px;
+  font-family: 'Pretendard-ExtraBold';
+  color: #ff8d1d;
+}
+
+.logo-title {
+  font-size: 2rem;
+  letter-spacing: -1.2px;
+  font-family: 'Pretendard-Medium';
 }

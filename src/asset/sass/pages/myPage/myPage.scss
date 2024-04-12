@@ -5,18 +5,17 @@
 
 .mypage-select-menu {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   flex-direction: row;
-  gap: 3%;
   margin: 5% auto 0 auto;
   width: 75%;
 }
 
 .title {
-  font-size: 2rem;
-  margin: 10% 0 2% 0;
-  letter-spacing: -2px;
+  font-size: 3.5rem;
+  margin: 10% 0 8% 12%;
+  letter-spacing: -1px;
   font-family: pretendard-bold;
   align-items: center;
   width: 70%;
@@ -30,12 +29,18 @@
 
 .title-intro {
   letter-spacing: -1px;
-  font-family: pretendard-regular;
-  font-size: 1.2rem;
+  font-family: pretendard-semiBold;
+  font-size: 2rem;
+  margin-left: 0.3rem;
 }
 
-// .title-login {
-// }
+.my-social-type {
+  font-size: 2rem;
+  color: #474646;
+  letter-spacing: -1px;
+  font-family: Pretendard-SemiBold;
+  margin-top: 1rem;
+}
 
 .menu-contact,
 .menu-event,
@@ -58,25 +63,15 @@
   transform: scale(1.05);
 }
 .menu {
-  gap: 19px;
-}
-
-.menu-contact {
-  gap: 19px;
-}
-
-.menu-event {
-  gap: 19px;
-}
-
-.menu-edit {
-  gap: 19px;
+  gap: 25px;
+  height: 100%;
 }
 
 .letter {
   letter-spacing: -1px;
-  font-weight: bold;
-  font-size: 1rem;
+  font-family: Pretendard-semiBold;
+  color: #474646;
+  font-size: 1.5rem;
 }
 
 .title-info-container {

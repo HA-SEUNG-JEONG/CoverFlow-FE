@@ -1,44 +1,34 @@
 import React, { useEffect, useState, useRef } from 'react';
-import axios from 'axios';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import '../../../asset/sass/pages/postPage/questionDetailPage.scss';
-import { StyledPage, StyledHeader } from '../../../styledComponent.js';
+import { StyledPage, StyledHeader } from '../../../styledComponent';
 import TitleHeader from '../../ui/header/titleHeader';
-import Answer from '../../ui/question/answer.jsx';
+import Answer from '../../ui/question/answer.tsx';
 import TabBar from '../../ui/tabBar/tabBar';
-// import Chat from '../../../asset/image/chat.svg';
-// import View from '../../../asset/image/view.svg';
-import { BASE_URL, ACCESS_TOKEN } from '../../global/constants';
-// import Questitle from '../../../asset/image/questitle.svg';
-// import Report from '../../../asset/image/report.svg';
+import { ACCESS_TOKEN } from '../../global/constants';
 import Tree from '../../../asset/image/nature-ecology-tree-3--tree-plant-cloud-shape-park.svg';
+import Reward from '../../../asset/image/reward.svg';
+
+import { showErrorToast, showSuccessToast } from '../../ui/toast/toast.tsx';
+import { fetchAPI } from '../../global/utils/apiUtil.js';
 
 const Questioner = styled.div`
-  font-family: pretendard-bold;
   letter-spacing: -1px;
   margin-left: 2%;
 `;
 
-const QuestionerTag = styled.div`
-  letter-spacing: -1px;
-  margin-left: -44%;
-  margin-top: 0.5%;
-  font-size: 13px;
-`;
-
 const QuestionTitle = styled.div`
-  margin-top: 5%;
   font-family: pretendard-semibold;
   letter-spacing: -1px;
-  font-size: 18px;
+  font-size: 30px;
   padding: 10px;
 `;
 
 const QuestionContent = styled.div`
-  margin-top: 7%;
+  margin-top: 3%;
   margin-left: 2%;
-  margin-bottom: 7%;
+  margin-bottom: 2%;
   letter-spacing: -1px;
   font-family: pretendard-light;
   line-height: 1.5;
@@ -60,107 +50,137 @@ const FirstLine = styled.div`
 
 const AnswerList = styled.div``;
 
+export interface AnswerProps {
+  answerId: string;
+  answererTag: string;
+  createAt: string;
+  answerContent: string;
+  answererNickname: string;
+}
+
+interface QuestionDetailProps {
+  title: string;
+  questionContent: string;
+  answerCount: number;
+  reward: number;
+  questionerNickname: string;
+  questionTag: string;
+  createAt: string;
+  answers: AnswerProps[];
+  answerer?: string;
+  companyName?: string;
+  totalPages?: number;
+  viewCount?: number;
+  onAdopt?: () => void;
+  content?: string;
+}
+
 function QuestionDetailPage() {
   const navigate = useNavigate();
-  const answerRef = useRef();
+  const { state } = useLocation();
+  const answerRef = useRef<HTMLTextAreaElement>(null);
   const [answer, setAnswer] = useState('');
   const [showReportPopup, setShowReportPopup] = useState(false);
-  const [questionDetail, setQuestionDetail] = useState({
-    questionId: '3',
-    title: '질문 제목',
-    questionContent: 'Lorem ipsum dolor sit amet, consectetur adip',
-    answerCount: 0,
-    reward: 0,
-    questionNickname: '붕어빵',
-    questionTag: 'JavaScript',
-    createAt: '3',
-    answers: [],
-  });
+  const [questionDetail, setQuestionDetail] = useState<QuestionDetailProps[]>([
+    {
+      title: '',
+      questionContent: '',
+      answerCount: 0,
+      reward: 0,
+      questionerNickname: '',
+      questionTag: '',
+      createAt: '',
+      answers: [],
+      companyName: '',
+      totalPages: 0,
+      viewCount: 0,
+    },
+  ]);
 
   const { questionId } = useParams();
-  console.log('id', questionId);
 
-  function formatDate(fullDate) {
-    const date = new Date(fullDate);
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
+  // function formatDate(fullDate: string) {
+  //   const date = new Date(fullDate);
+  //   const year = date.getFullYear();
+  //   const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  //   const day = date.getDate().toString().padStart(2, '0');
 
-    return `${year}-${month}-${day}`;
-  }
+  //   return `${year}-${month}-${day}`;
+  // }
 
   useEffect(() => {
-    const token = localStorage.getItem(ACCESS_TOKEN);
+    const fecthQuestionDetail = async () => {
+      const token = localStorage.getItem(ACCESS_TOKEN);
 
-    if (!token) {
-      alert('로그인이 필요합니다.');
-      navigate(-1);
-    }
-    if (questionId) {
-      fetchQuestionDetail(questionId);
-    }
+      if (!token) {
+        showErrorToast('로그인이 필요합니다.');
+        navigate(-1);
+      }
+    };
+    fecthQuestionDetail();
   }, [answer]);
-
-  const fetchQuestionDetail = (questionId) => {
-    axios
-      .get(`${BASE_URL}/api/question/${questionId}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN)}`,
-        },
-      })
-      .then((response) => {
-        if (response.data && response.data.statusCode === 'OK') {
-          console.log(response.data);
-          const questionData = response.data.data;
-          const updatedQuestionDetail = {
-            ...questionData,
-            answers: [...questionData.answers],
-          };
-          console.log(updatedQuestionDetail);
-          setQuestionDetail(updatedQuestionDetail);
-        }
-      })
-      .catch((error) => {
-        console.error('질문과 답변을 불러오는데 실패했습니다.', error);
-      });
-  };
 
   const handleGoBack = () => {
     navigate(-1);
   };
 
   const handleAnswerSubmit = async () => {
-    const questionId = questionDetail && questionDetail.questionId;
-
     const requestData = {
       content: answerRef.current ? answerRef.current.value : '',
-      questionId,
+      questionId: Number(questionId),
     };
 
     // console.log('답변 제출 중:', requestData);
 
-    await axios
-      .post(`${BASE_URL}/api/answer`, requestData, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN)}`,
-        },
-      })
-      .then((response) => {
-        console.log('답변 제출 응답:', response.data);
-        if (response.data && response.data.statusCode === 'OK') {
-          console.log('답변이 성공적으로 등록되었습니다.');
-          alert('답변이 등록되었습니다.');
-          setAnswer(answerRef.current.value);
-        }
-      })
-      .catch((error) => {
-        console.error('답변 등록에 실패했습니다.', error);
-      });
-  };
+    const data = await fetchAPI('/api/answer', 'POST', requestData);
 
-  const formattedDate = formatDate(questionDetail.createAt);
+    if (data.statusCode === 'CREATED' && answerRef.current) {
+      setAnswer(answerRef.current?.value);
+      showSuccessToast('답변이 등록되었습니다.');
+    }
+
+    const res = await fetchAPI(
+      `/api/question/${questionId}?pageNo=0`,
+      'GET',
+      null,
+    );
+    const {
+      answerCount,
+      answers,
+      companyName,
+      questionContent,
+      createAt,
+      questionTag,
+      questionTitle,
+      questionerNickname,
+      reward,
+      totalPages,
+      viewCount,
+    } = res.data;
+
+    setQuestionDetail([
+      {
+        title: questionTitle,
+        questionContent,
+        answerCount,
+        reward,
+        questionerNickname,
+        questionTag,
+        createAt,
+        answers: answers.map((answer: AnswerProps) => ({
+          answerId: answer.answerId,
+          answererNickname: answer.answererNickname,
+          answererTag: answer.answererTag,
+          createAt: answer.createAt,
+          answerContent: answer.answerContent,
+        })),
+        companyName,
+
+        totalPages,
+        viewCount,
+      },
+    ]);
+  };
 
   const toggleReportPopup = () => {
     setShowReportPopup(!showReportPopup);
@@ -179,26 +199,25 @@ function QuestionDetailPage() {
       <div className="question-detail-container">
         <div className="job-info">
           <img src={Tree} alt="" />
-          현직자가 남긴 글이에요
+          {state.questionerTag === '취준생'
+            ? `${state.questionerTag}이 남긴 글이에요.`
+            : `${state.questionerTag}가 남긴 질문이에요.}`}
         </div>
-        <QuestionTitle>
-          {/* <img className="questionicon-img" src={Questitle} /> */}
-          {questionDetail.title}
-        </QuestionTitle>
+        <QuestionTitle>{state.questionTitle}</QuestionTitle>
         <div className="questioner-info">
           <Questioner>
-            {questionDetail.questionNickname || 'Anonymous'}{' '}
-            {/* <span className="middle">•</span> */}
-            <span className="question-date">{formattedDate}</span>
+            {state.questioner || 'Anonymous'} <span className="middle">•</span>
+            <span className="question-date">{state.createAt}</span>
           </Questioner>
-
-          <QuestionerTag>{questionDetail.questionTag}</QuestionerTag>
         </div>
 
-        <QuestionContent>{questionDetail.questionContent}</QuestionContent>
+        <QuestionContent>{state.questionContent}</QuestionContent>
         <div className="company-fish-tag">
           <div className="detailpage-company">카카오</div>
-          <div className="detailpage-fishbuncount">{questionDetail.reward}</div>
+          <div className="detailpage-fishbuncount">
+            <img src={Reward} alt="reward" />
+            {state.reward}
+          </div>
         </div>
         <FirstLine />
         <div className="view-info-container">
@@ -268,17 +287,25 @@ function QuestionDetailPage() {
       {/* <LastLine /> */}
 
       <AnswerList>
-        <div className="answer-title">답변</div>
-        {questionDetail.answers.map((answer, index) => (
-          <Answer
-            key={index}
-            answerId={answer.answerId.toString()}
-            answerer={answer.answerNickname}
-            answererTag={answer.answerTag}
-            replyCount={'0'}
-            answerContent={answer.content}
-            createAt={answer.createAt}
-          />
+        {/* <Answer key={questionId} answerContent={answer} />
+         */}
+        {questionDetail.map((detail, index) => (
+          <>
+            <div className="answer-title">답변 {detail.answerCount}</div>
+            <Answer
+              answerCount={detail.answerCount}
+              answererTag={detail.questionTag}
+              createAt={detail.createAt}
+              key={index}
+              answers={detail.answers.map((answer) => ({
+                answerId: answer.answerId,
+                answererTag: answer.answererTag,
+                createAt: answer.createAt,
+                answerContent: answer.answerContent,
+                answererNickname: answer.answererNickname,
+              }))}
+            />
+          </>
         ))}
       </AnswerList>
       <TabBar />

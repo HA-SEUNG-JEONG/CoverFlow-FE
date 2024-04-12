@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 
-import { StyledPage } from '../../../styledComponent';
-
 import styled from 'styled-components';
 import '../../../asset/sass/pages/myPage/premiumPage.scss';
 import VectorIcon from '../../../asset/image/vector.svg';
@@ -11,6 +9,8 @@ import TabBar from '../../ui/tabBar/tabBar';
 import BannerImage from '../../ui/banner/bannerImage';
 import { useNavigate } from 'react-router-dom';
 import { SectionProps } from '../../../types';
+import { StyledPage, StyledHeader } from '../../../styledComponent';
+import TitleHeader from '../../ui/header/titleHeader';
 
 const StatusBar = styled.div`
   display: flex;
@@ -31,8 +31,7 @@ const StatusTab = styled.div<{ $current: boolean }>`
   transition:
     border-bottom 0.3s ease-in-out,
     color 0.3s ease-in-out;
-  ${(props) =>
-    props.$current && 'color: black; border-bottom: 3px solid black;'}
+  ${($current) => $current && 'color: black; border-bottom: 3px solid black;'}
 `;
 
 const PremiumPage = () => {
@@ -46,18 +45,25 @@ const PremiumPage = () => {
     setIsChecked((check) => !check);
   };
 
+  const handleGoBack = () => {
+    navigate('/');
+  };
+
   return (
     <StyledPage
       className="main-page-container"
       style={{ position: 'relative' }}
     >
-      <TabBar />
+      <StyledHeader>
+        <TitleHeader pageTitle="문의하기" handleGoBack={handleGoBack} />
+        <TabBar />
+      </StyledHeader>
       <StatusBar>
         <StatusTab
           $current={currentSection === 'buy'}
           onClick={() => setCurrentSection('buy')}
         >
-          구매하기
+          구매하
         </StatusTab>
         <StatusTab
           $current={currentSection === 'myPremium'}
@@ -71,7 +77,7 @@ const PremiumPage = () => {
       {
         <div className="premium-container">
           <div className="premium-wrapper">
-            <div className="company">코버플로우</div>
+            <div className="premium-company">코버플로우</div>
             <div className="price">9,900원</div>
             <div className="point">포인트</div>
             <div className="benefit">혜택 보기</div>
@@ -88,9 +94,12 @@ const PremiumPage = () => {
             />
 
             <span>결제 정보 확인 및 정보 제공 동의</span>
-            <span className="detail">자세히</span>
+            {/* <span className="detail">자세히</span> */}
           </div>
-          <button onClick={handlePaymentClick} className="button">
+          <button
+            onClick={handlePaymentClick}
+            className={`${isChecked === true ? 'selected' : ''}`}
+          >
             동의하고 결제하기
           </button>
         </div>

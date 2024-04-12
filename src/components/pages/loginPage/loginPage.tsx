@@ -11,8 +11,9 @@ import { StyledHeader, StyledPage } from '../../../styledComponent';
 import { ACCESS_TOKEN, BASE_URL } from '../../global/constants';
 
 const WelcomeMessage = styled.p`
-  margin: 20% 0% 0% 15%;
-  font-size: 1.4rem;
+  margin: 15% 0% 0% 15%;
+  font-size: 3.5rem;
+  font-family: Pretendard-Bold;
   letter-spacing: -1px;
   color: #000;
   font-weight: bold;
@@ -20,15 +21,16 @@ const WelcomeMessage = styled.p`
 `;
 
 const SecondaryMessage = styled.p`
-  margin: 2% 0% 0% 15%;
-  font-size: 0.8rem;
-  letter-spacing: -0.5px;
+  margin: 2% 0% 5% 15%;
+  font-size: 2rem;
+  letter-spacing: -1.5px;
   color: #474646;
-  font-weight: 100;
 `;
 
 const FastLoginImage = styled.img`
-  margin: 0% 0% -21% 41.5%;
+  margin: 3rem 39% 0 39%;
+  width: 15rem;
+  height: 5rem;
 `;
 
 const HorizontalRule = styled.hr`
@@ -40,7 +42,7 @@ const HorizontalRule = styled.hr`
 
   &:after {
     content: '또는';
-    font-size: 0.7rem;
+    font-size: 1.5rem;
     position: relative;
     top: -10px;
     background-color: white;
@@ -48,6 +50,7 @@ const HorizontalRule = styled.hr`
     letter-spacing: -1px;
     padding: 0 10px;
     margin-left: 4.8%;
+    font-family: Pretendard-Medium;
   }
 `;
 
@@ -93,11 +96,7 @@ function LoginPage() {
 
         <SecondaryMessage>로그인을 진행해 주세요 :)</SecondaryMessage>
 
-        <FastLoginImage
-          src={Fastlogin}
-          alt="빠른 로그인"
-          className="fast-login"
-        />
+        <FastLoginImage src={Fastlogin} alt="빠른 로그인" />
 
         <KakaoLoginButton href={`${BASE_URL}/oauth2/authorization/kakao`}>
           <img src={Kakao} alt="Kakao 로그인" className="kakao-login" />
