@@ -70,6 +70,7 @@ const reissueTokens = async () => {
       localStorage.setItem(REFRESH_TOKEN, newRefreshToken);
       const expiresAt = new Date().getTime() + TOKEN_EXPIRES_IN * 1000;
       store.dispatch(setTokens(newAccessToken, newRefreshToken, expiresAt));
+      // console.log('토큰 재발급 성공');
     } else {
       throw new Error('새 토큰 정보를 받지 못했습니다.');
     }
@@ -90,7 +91,7 @@ export const fetchAPI = async (endpoint, method, body) => {
   }
 
   if (isTokenExpired()) {
-    console.log('토큰 시간 만료, 재발급 진행');
+    // console.log('토큰 시간 만료, 재발급 진행');
     await reissueTokens();
   }
 
@@ -108,7 +109,11 @@ export const fetchAPI = async (endpoint, method, body) => {
   const responseData = await response.json();
 
   if (!response.ok) {
-    throw new Error('요청 처리 실패', response.message);
+    return {
+      error: true,
+      status: response.status,
+      message: responseData.message || '알 수 없는 오류'
+    };     
   }
 
   return responseData;

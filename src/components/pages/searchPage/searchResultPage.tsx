@@ -12,11 +12,12 @@ import Warning from '../../../asset/image/warning-triangle.svg';
 import '../../../asset/sass/pages/notificationPage/notificationPage.scss';
 import SearchInput from '../../ui/searchInput/searchInput.tsx';
 import { showErrorToast } from '../../ui/toast/toast.tsx';
-import Pagination from '../../ui/Pagination.tsx';
+import AdminPagination from '../../ui/adminSelection/adminPagination.tsx';
 
 const ResultsContainer = styled.div`
   position: relative;
   background-color: #ffffff;
+  margin-bottom: 10rem;
 `;
 
 const ResultItem = styled.li`
@@ -57,6 +58,7 @@ const ResultItem = styled.li`
 const IndustryTagContainer = styled.div`
   display: flex;
   flex-direction: column;
+  padding: 2.5rem;
 `;
 
 const IndustryTag = styled.span`
@@ -76,9 +78,10 @@ const ResultsList = styled.ul`
 
 const ResultCount = styled.div`
   letter-spacing: -1px;
-  margin: 9% 0% -3% 11%;
+  margin: 7% 0% -7% 12.5%;
+  font-family: Pretendard-Bold;
   color: #333;
-  font-size: 14px;
+  font-size: 1.8rem;
   font-weight: 600;
 `;
 
@@ -93,22 +96,27 @@ const QuestionCount = styled.div`
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.05),
     0 1px 2px rgba(0, 0, 0, 0.1);
-  padding: 0.6rem 1.2rem;
+  padding: 0.5rem 1.2rem;
   border-radius: 0.6rem;
-  border-bottom: #d9d9d9;
+  position: relative;
+
   &::before {
     content: '질문 수';
     display: block;
     font-size: 0.8em;
     color: #6c757d;
-    margin-bottom: 10%;
+    margin-bottom: 30%;
     font-weight: 400;
   }
 
   &::after {
     content: '';
-    display: block;
-    height: 1px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 50%;
+    width: 58.41px;
+    border-bottom: 1px solid #eaeaea;
   }
 `;
 
@@ -120,14 +128,16 @@ interface SearchResultProps {
       companyType: string;
       questionCount: number;
     }[];
+    totalCompany: number;
+    totalPages: number;
   };
 }
 
 interface SearchDataProps {
-  companyAddress: string;
+  companyAddress?: string;
   companyId: number;
   companyName: string;
-  companyStatus: 'EXAMINATION' | 'REGISTRATION' | 'DELETION';
+  companyStatus?: 'EXAMINATION' | 'REGISTRATION' | 'DELETION';
   companyType: string;
   questionCount: number;
 }
@@ -140,24 +150,15 @@ function SearchResultPage() {
   const keyword = searchParams.get('keyword');
 
   const {
-    state: { searchResults },
+    state: { searchResults, totalCompany, totalPages },
   } = useLocation() as SearchResultProps;
-  const [searchData, setSearchData] = useState<SearchDataProps[]>([]);
-  const companyList = searchResults.map((result) => result);
-  const companyName = companyList.map((list) => list.companyName);
-  // const keyword = queryParams.get('keyword');
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [searchData, setSearchData] =
+    useState<SearchDataProps[]>(searchResults);
+  const [companyCnt, setCompanyCnt] = useState(totalCompany);
+  const [pageCnt, setPageCnt] = useState(totalPages);
 
-  // const indexOfLastItem = currentPage * itemsPerPage;
-  // const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  // const currentItems = Array.from(searchResults)?.slice(
-  //   indexOfFirstItem,
-  //   indexOfLastItem,
-  // );
-
-  const totalPages = Math.ceil(searchResults.length / itemsPerPage);
+  const [currentPage, setCurrentPage] = useState(0);
 
   const handleGoBack = () => {
     navigate('/search-company');
@@ -168,32 +169,54 @@ function SearchResultPage() {
       if (!keyword) return;
       try {
         const response = await fetch(
-          `${BASE_URL}/api/company?pageNo=0&name=${keyword}`,
+          `${BASE_URL}/api/company?pageNo=${currentPage}&name=${keyword}`,
           {
             method: 'GET',
           },
         );
         const data = await response.json();
         setSearchData(data.data.companyList);
-        console.log('페이지 내 결과', data.data.companyList);
+
+        console.log('페이지 내 결과', data.data);
       } catch (error) {
-        showErrorToast(`오류가 여기서발생: ${error}`);
+        showErrorToast(`오류 발생: ${error}`);
+        setSearchData([]);
+      }
+    };
+
+    const fetchCnt = async () => {
+      if (!keyword) return;
+      try {
+        const response = await fetch(
+          `${BASE_URL}/api/company/count?name=${keyword}`,
+          {
+            method: 'GET',
+          },
+        );
+        const data = await response.json();
+        setCompanyCnt(data.data.totalElements);
+        setPageCnt(data.data.totalPages);
+      } catch (error) {
+        showErrorToast(`오류 발생: ${error}`);
         setSearchData([]);
       }
     };
 
     fetchData();
-  }, [keyword]);
+    fetchCnt();
+  }, [keyword, currentPage]);
 
   const goToResultDetailPage = (companyId: number) => {
     navigate(`/company-info/${companyId}`);
   };
 
-  const handlePagination = (type: PageProps) => {
-    if (type === 'prev' && currentPage > 0) {
+  const handlePagination = (direction) => {
+    if (direction === 'prev' && currentPage > 0) {
       setCurrentPage(currentPage - 1);
-    } else if (type === 'next' && currentPage < totalPages - 1) {
+    } else if (direction === 'next') {
       setCurrentPage(currentPage + 1);
+    } else if (typeof direction === 'number') {
+      setCurrentPage(direction);
     }
   };
 
@@ -202,13 +225,13 @@ function SearchResultPage() {
       <StyledHeader>
         <ResultsContainer>
           <TitleHeader pageTitle="검색 결과" handleGoBack={handleGoBack} />
-          <SearchInput />
+          <SearchInput setCurrentPage={setCurrentPage} />
           <ResultCount>
             기업 검색 결과
-            <span className="result-count">{companyName.length}</span>
+            <span className="result-count">{companyCnt}</span>
           </ResultCount>
           <ResultsList>
-            {searchData ? (
+            {searchData.length > 0 ? (
               searchData.map((item) => (
                 <ResultItem
                   key={item.companyId}
@@ -216,7 +239,7 @@ function SearchResultPage() {
                 >
                   <IndustryTagContainer>
                     <span>{item.companyName}</span>
-                    <IndustryTag>업종 : {item.companyType}</IndustryTag>
+                    <IndustryTag>{item.companyType}</IndustryTag>
                   </IndustryTagContainer>
                   <QuestionCount>{item.questionCount}</QuestionCount>
                 </ResultItem>
@@ -243,9 +266,9 @@ function SearchResultPage() {
             )}
           </ResultsList>
 
-          {totalPages > 1 && (
-            <Pagination
-              totalPages={totalPages}
+          {companyCnt > 0 && (
+            <AdminPagination
+              totalPages={pageCnt}
               currentPage={currentPage}
               handlePagination={handlePagination}
             />

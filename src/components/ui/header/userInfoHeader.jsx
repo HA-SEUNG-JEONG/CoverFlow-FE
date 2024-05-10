@@ -5,17 +5,14 @@ import Reward from '../../../asset/image/reward.svg';
 import Loginuser from '../../../asset/image/loginuser.svg';
 import '../../../asset/sass/etc/header/userInfoHeader.scss';
 import { fetchAPI } from '../../global/utils/apiUtil.js';
-
 import {
   setLoggedIn,
   setRewardCount,
   toggleDropdown,
+  setNickname,
 } from '../../../store/actions/userActions';
-import {
-  BASE_URL,
-  ACCESS_TOKEN,
-  REFRESH_TOKEN,
-} from '../../global/constants/index.ts';
+import { alertCount } from '../../../store/actions/alertActions.js';
+import { ACCESS_TOKEN, REFRESH_TOKEN } from '../../global/constants/index.ts';
 
 function UserInfoHeader() {
   const { isLoggedIn, rewardCount, isDropdownOpen } = useSelector(
@@ -25,6 +22,7 @@ function UserInfoHeader() {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
 
+  // useInitializeSSE(isLoggedIn);
   /*
 사용자의 로그인 상태를 확인하고, 붕어빵 개수를 로드하는 로직입니다.
 01. 페이지 로드 시에 로컬 스토리지에서 토큰을 조회하여 로그인 상태를 확인합니다.
@@ -32,33 +30,26 @@ function UserInfoHeader() {
 03. 로그인이 되어있다면, 사용자의 붕어빵 개수를 서버에서 가져와서 `setRewardCount` 액션으로 상태 업데이트
 */
   useEffect(() => {
-    const token = localStorage.getItem(ACCESS_TOKEN);
-    const loggedInStatus = !!token;
+    const loggedInStatus = !!localStorage.getItem(ACCESS_TOKEN);
     dispatch(setLoggedIn(loggedInStatus));
 
     if (loggedInStatus) {
-      fetch(`${BASE_URL}/api/member/me`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      })
-        .then((response) => response.json())
+      fetchAPI('/api/member/me', 'GET')
         .then((data) => {
           if (data && data.data && data.data.fishShapedBun !== undefined) {
             dispatch(setRewardCount(data.data.fishShapedBun));
-            console.log('붕어빵 개수:', data.data.fishShapedBun);
+            dispatch(setNickname(data.data.nickname));
+            // console.log('붕어빵 개수:', data.data.fishShapedBun);
           } else {
             console.error('유효하지 않은 데이터를 받았습니다.', data);
           }
         })
-        .catch((error) =>
+        .catch((error) => {
           console.error(
             '붕어빵 데이터를 가져오는 데 오류가 발생했습니다.',
             error,
-          ),
-        );
+          );
+        });
     }
   }, [dispatch]);
 
@@ -108,16 +99,21 @@ function UserInfoHeader() {
   그리고, setLoggedIn(false) 액션을 디스패치하여 로그인 상태를 업데이트한 후, 홈페이지로 리다이렉트 합니다.
   */
   const logout = async () => {
-    console.log('로그아웃 요청 시작');
+    // console.log('로그아웃 요청 시작');
     try {
       await fetchAPI('/api/member/logout', 'PATCH');
-      console.log('로그아웃 성공');
       localStorage.removeItem(ACCESS_TOKEN);
       localStorage.removeItem(REFRESH_TOKEN);
       dispatch(setLoggedIn(false));
+      dispatch(alertCount(0));
       navigate('/');
     } catch (error) {
-      console.error('로그아웃 처리 중 에러 발생:', error.message);
+      console.error(error);
+      localStorage.removeItem(ACCESS_TOKEN);
+      localStorage.removeItem(REFRESH_TOKEN);
+      dispatch(setLoggedIn(false));
+      dispatch(alertCount(0));
+      navigate('/');
     }
   };
 

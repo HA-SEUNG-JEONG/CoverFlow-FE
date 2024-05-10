@@ -1,23 +1,46 @@
 import React from 'react';
-import { PageProps } from '../pages/searchPage/searchResultPage';
 
 interface PaginationProps {
   totalPages: number;
   currentPage: number;
-  handlePagination: (type: PageProps) => void;
+  handlePagination: (type: string | number) => void;
+  className?: string;
 }
 
 const Pagination = ({
   totalPages,
   currentPage,
   handlePagination,
+  className,
 }: PaginationProps) => {
-  return (
-    <div className="notice-button-container">
+  const maxPagesToShow = 5; // 한 번에 보여줄 최대 페이지 수
+  const halfWindow = Math.floor(maxPagesToShow / 2);
+
+  let startPage = Math.max(0, currentPage - halfWindow);
+  const endPage = Math.min(startPage + maxPagesToShow - 1, totalPages - 1);
+
+  // 시작 페이지가 최대한 범위 내에서 조정되도록
+  if (endPage - startPage + 1 < maxPagesToShow && startPage > 0) {
+    startPage = Math.max(0, endPage - maxPagesToShow + 1);
+  }
+  const pages: React.ReactNode[] = [];
+  for (let page = startPage; page <= endPage; page++) {
+    pages.push(
       <div
-        // disabled={currentGroup === 0}
+        className={`notice-button ${currentPage === page ? 'active-item' : ''}`}
+        key={page}
         style={{ cursor: 'pointer' }}
-        onClick={() => handlePagination('prev')}
+        onClick={() => handlePagination(page)}
+      >
+        {page + 1}
+      </div>,
+    );
+  }
+  return (
+    <div className={`answer-button-container ${className}`}>
+      <div
+        style={{ cursor: 'pointer' }}
+        onClick={() => currentPage > 0 && handlePagination('prev')}
       >
         <svg
           width="8"
@@ -35,18 +58,10 @@ const Pagination = ({
           />
         </svg>
       </div>
-      {[...Array(totalPages)].map((_, index) => (
-        <div
-          className={`notice-button ${currentPage === index + 1 ? 'active-item' : ''}`}
-          key={index}
-        >
-          {index + 1}
-        </div>
-      ))}
+      {pages}
       <div
         style={{ cursor: 'pointer' }}
-        onClick={() => handlePagination('next')}
-        // disabled={currentGroup === totalGroup - 1}
+        onClick={() => currentPage < totalPages - 1 && handlePagination('next')}
       >
         <svg
           width="8"

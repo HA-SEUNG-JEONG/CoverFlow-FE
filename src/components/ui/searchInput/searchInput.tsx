@@ -11,17 +11,19 @@ import { conditionalExecution } from '../../../utils/utils';
 import { showErrorToast } from '../toast/toast';
 
 const StyledSearchInput = styled.input`
-  width: 32rem;
-  height: 3.4rem;
-  padding: 8px;
-  border: 2px solid #ff8d1d;
+  width: 51.5rem;
+  height: 5.5rem;
+  padding: 0.8rem 0.8rem 0.8rem 2rem;
+  border: 2px solid #ffbd7c;
   background-color: #fff;
-  border-radius: 1.8rem;
-  margin: 9% 0% 0% 27%;
+  border-radius: 3rem;
+  margin: 9% 0% 0% 12.5%;
   outline: none;
 
   &:focus {
     box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+    border-color: #ff8d1d;
+    box-shadow: 0 0 2px rgba(106, 57, 9, 0.5);
   }
 
   &::placeholder {
@@ -34,9 +36,9 @@ const StyledSearchInput = styled.input`
 const AutoCompleteContainer = styled.div`
   position: absolute;
   background-color: #fefefe;
-  width: 361px;
+  width: 490px;
   letter-spacing: -1px;
-  margin-left: 23%;
+  margin-left: 14%;
   margin-top: 1%;
   border-radius: 0 0 10px 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -46,9 +48,12 @@ const AutoCompleteContainer = styled.div`
 `;
 
 const AutoCompleteItem = styled.div`
-  padding: 10px;
+  padding: 15px 10px;
   cursor: pointer;
   &:hover {
+    background-color: #f2f2f2;
+  }
+  &.active {
     background-color: #f2f2f2;
   }
 `;
@@ -58,7 +63,11 @@ interface CompanyProps {
   companyName: string;
 }
 
-function SearchInput() {
+interface SearchInputProps {
+  setCurrentPage?: (page: number) => void;
+}
+
+function SearchInput({ setCurrentPage }: SearchInputProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const navigate = useNavigate();
   const [keyword, setKeyword] = useState('');
@@ -68,6 +77,8 @@ function SearchInput() {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [showAutoComplete, setShowAutoComplete] = useState(false);
   const autoCompleteContainerRef = useRef<HTMLDivElement | null>(null);
+  const [totalCompany, setTotalCompany] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   const debouncedKeyword = useDebounce(keyword, 300);
 
@@ -81,6 +92,16 @@ function SearchInput() {
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  useEffect(() => {
+    if (activeIndex >= 0 && autoCompleteValue[activeIndex]) {
+      const selectedItem = autoCompleteContainerRef.current?.children[
+        activeIndex
+      ] as HTMLElement;
+
+      selectedItem?.focus();
+    }
+  }, [activeIndex, autoCompleteValue]);
 
   useEffect(() => {
     if (debouncedKeyword !== '') {
@@ -102,17 +123,6 @@ function SearchInput() {
     setShowAutoComplete(true);
     setKeyword(newInputValue);
     setActiveIndex(-1);
-
-    // if (newInputValue.length > 0) {
-    //   const lastCharacter = newInputValue.slice(-1);
-    //   if (isSyllable(lastCharacter)) {
-    //     fetchAutoCompleteData(newInputValue);
-    //   } else {
-    //     setAutoCompleteValue([]);
-    //   }
-    // } else {
-    //   setAutoCompleteValue([]);
-    // }
   };
 
   // 자동완성 데이터 요청
@@ -122,44 +132,24 @@ function SearchInput() {
         `${BASE_URL}/api/company?pageNo=0&name=${name}`,
       );
       setAutoCompleteValue(res.data.data.companyList);
-      // console.log('인풋 내 결과', res.data.data.companyList);
+      setTotalCompany(res.data.data.totalElements);
+      setTotalPages(res.data.data.totalPages);
+      // console.log('인풋 내 결과', res.data);
     } catch (error) {
       showErrorToast(`자동완성 데이터 요청 실패 ${error}`);
       setAutoCompleteValue([]);
     }
   };
 
-  // const fullDataSearch = (keyword: string) => {
-  //   const params = new URLSearchParams();
-  //   params.append('keyword', keyword);
-  //   navigate(`/search-result?${params.toString()}`, {
-  //     state: { searchResults: autoCompleteValue },
-  //   });
-  // };
-
-  // const specificItemSeach = (companyName: string) => {
-  //   const selectedItem = autoCompleteValue.find(
-  //     (item) => item.companyName === companyName,
-  //   );
-  //   if (selectedItem) {
-  //     setKeyword(selectedItem.name);
-  //     setShowAutoComplete(false);
-  //     const params = new URLSearchParams();
-  //     params.append('keyword', selectedItem.name);
-  //     navigate(`/search-result?${params.toString()}`, {
-  //       state: { searchResults: [selectedItem] },
-  //     });
-  //   }
-  // };
   // 검색 함수
   const handleCompanySearch = () => {
     if (!keyword) return;
 
     const params = new URLSearchParams();
     params.append('keyword', keyword);
-
+    setCurrentPage?.(0);
     navigate(`/search-result?${params.toString()}`, {
-      state: { searchResults: autoCompleteValue },
+      state: { searchResults: autoCompleteValue, totalCompany, totalPages },
     });
   };
 
@@ -195,7 +185,7 @@ function SearchInput() {
         const params = new URLSearchParams();
         params.append('keyword', selectedItem.companyName);
         navigate(`/search-result?${params.toString()}`, {
-          state: { searchResults: [selectedItem] },
+          state: { searchResults: [selectedItem], totalCompany, totalPages },
         });
       }, 0);
     } else {
@@ -263,6 +253,7 @@ function SearchInput() {
               style={
                 index === activeIndex ? { backgroundColor: '#f2f2f2' } : {}
               }
+              className={index === activeIndex ? 'active' : ''}
             >
               {value.companyName}
             </AutoCompleteItem>

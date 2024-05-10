@@ -11,7 +11,7 @@ const StatusBar = styled.div`
   width: 100%;
 `;
 
-const StatusTab = styled.div<{ current: boolean }>`
+const StatusTab = styled.div<{ $current: boolean }>`
   width: 50%;
   height: 100%;
 
@@ -21,14 +21,13 @@ const StatusTab = styled.div<{ current: boolean }>`
   text-align: center;
   padding: 10px 0;
   cursor: pointer;
-  color: #d9d9d9;
-  border-bottom: 8px solid transparent;
+  color: ${({ $current }) => ($current ? 'black' : 'gray')};
+  border-bottom: ${({ $current }) =>
+    $current ? '8px solid black' : '8px solid transparent'};
   margin-bottom: -8px;
   transition:
     border-bottom 0.3s ease-in-out,
     color 0.3s ease-in-out;
-  ${(props) =>
-    props.current && 'color: black; border-bottom: 8px solid black;  '}
 `;
 // ======================= 스타일드 컴포넌트
 
@@ -54,13 +53,13 @@ export default function SelectSlider({
     <div className="slider-container">
       <StatusBar>
         <StatusTab
-          current={currentSection === 'A'}
+          $current={currentSection === 'A'}
           onClick={() => setCurrentSection('A')}
         >
           {sectionA}
         </StatusTab>
         <StatusTab
-          current={currentSection === 'B'}
+          $current={currentSection === 'B'}
           onClick={() => setCurrentSection('B')}
         >
           {sectionB}

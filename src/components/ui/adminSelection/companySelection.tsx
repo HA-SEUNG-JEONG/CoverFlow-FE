@@ -34,18 +34,19 @@ interface ApiResponse {
 
 export default function CompanySelection() {
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [totalCompanyCount, seTtotalCompanyCount] = useState<number>(0);
+  const [totalCompanyCount, seTtotalCompanyCount] = useState(0);
   const [selectedCompany, setSelectedCompany] = useState(null);
-  const [currentPage, setCurrentPage] = useState<number>(0);
-  const [totalPages, setTotalPages] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [companyType, setcompanyType] = useState('');
   const [companyStatus, setCompanyStatus] = useState('');
-  const [selectedCity, setSelectedCity] = useState<string>('');
+  const [selectedCity, setSelectedCity] = useState('');
   const [selectedDistrictOptions, setSelectedDistrictOptions] = useState<
     string[]
   >([]);
-  const [selectedDistrict, setSelectedDistrict] = useState<string>('');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
   const itemsPerPage = 10;
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     fetchCompanies(currentPage);
@@ -76,6 +77,9 @@ export default function CompanySelection() {
       criterion: 'createdAt',
     });
 
+    if (companyType) {
+      queryParams.set('type', companyType);
+    }
     if (companyStatus) {
       queryParams.set('companyStatus', companyStatus);
     }
@@ -85,6 +89,25 @@ export default function CompanySelection() {
     if (selectedDistrict) {
       queryParams.set('district', selectedDistrict);
     }
+
+    const item = `${BASE_URL}/api/company/admin/count?${queryParams.toString()}`;
+    fetch(item, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN)}`,
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => response.json())
+      .then((data: ApiResponse) => {
+        console.log(data);
+        setCompanies(data.data.companies);
+        setTotalPages(data.data.totalPages);
+        seTtotalCompanyCount(data.data.totalElements);
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+        setIsLoading(false);
+      });
 
     const url = `${BASE_URL}/api/company/admin?${queryParams.toString()}`;
     fetch(url, {
@@ -97,8 +120,6 @@ export default function CompanySelection() {
       .then((data: ApiResponse) => {
         console.log(data);
         setCompanies(data.data.companies);
-        setTotalPages(data.data.totalPages);
-        seTtotalCompanyCount(data.data.totalElements);
         setIsLoading(false);
       })
       .catch((error) => {
@@ -152,7 +173,11 @@ export default function CompanySelection() {
           <div className="ad-searchOption">
             <div className="ad-searchOption-item">
               <span className="ad-searchOption-title">기업 업종</span>
-              <select className="ad-searchOption-select">
+              <select
+                className="ad-searchOption-select"
+                value={companyType}
+                onChange={(e) => setcompanyType(e.target.value)}
+              >
                 <option value=""></option>
                 {type.map((companyType, index) => (
                   <option key={index} value={companyType}>
@@ -215,7 +240,10 @@ export default function CompanySelection() {
               <Button
                 variant="admin-white"
                 onClick={() => {
+                  setcompanyType('');
                   setCompanyStatus('');
+                  setSelectedDistrict('');
+                  setSelectedCity('');
                   setCurrentPage(0);
                 }}
               >
@@ -264,13 +292,15 @@ export default function CompanySelection() {
                     })}
                   </ul>
                 </div>
-                {companies && (
-                  <AdminPagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    handlePagination={handlePagination}
-                  />
-                )}
+                <div className="ad-member-pagination">
+                  {companies && (
+                    <AdminPagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      handlePagination={handlePagination}
+                    />
+                  )}
+                </div>
               </div>
             )}
           </div>

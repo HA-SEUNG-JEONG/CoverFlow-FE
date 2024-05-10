@@ -7,11 +7,7 @@ import TabBar from '../../ui/tabBar/tabBar.jsx';
 import Button from '../../ui/button/Button/Button.jsx';
 import TextArea from '../../ui/inputbox/TextArea.jsx';
 import { showErrorToast, showSuccessToast } from '../../ui/toast/toast.tsx';
-import { fetchAPI } from '../../global/utils/apiUtil.js';
-
-interface Feedback {
-  content: string;
-}
+import { BASE_URL, ACCESS_TOKEN } from '../../global/constants/index.ts';
 
 function FeedbackPage() {
   const navigate = useNavigate();
@@ -33,16 +29,32 @@ function FeedbackPage() {
         return;
       }
 
-      const body: Feedback = { content: contact };
-      const data = await fetchAPI('/api/feedback', 'POST', body);
-
-      if (data.statusCode === 'CREATED') {
-        showSuccessToast('피드백 등록이 완료되었습니다!');
-        navigate('/');
+      const body = { content: contact };
+      const response = await fetch(`${BASE_URL}/api/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN)}`,
+        },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (response.status === 400) {
+          showErrorToast(errorData.error || '알 수 없는 에러가 발생했습니다.');
+        } else {
+          throw new Error(`서버 응답: ${response.status}`);
+        }
+      } else {
+        const data = await response.json();
+        if (data.statusCode === 'CREATED') {
+          showSuccessToast('피드백 등록이 완료되었습니다!');
+          navigate('/');
+        }
       }
     } catch (error) {
-      console.error('피드백 등록 실패:', error);
-      showErrorToast('피드백 등록에 실패했습니다.');
+      console.log('피드백 등록 실패:', error);
+      showErrorToast('피드백 등록 중 문제가 발생했습니다.');
     }
   };
   return (

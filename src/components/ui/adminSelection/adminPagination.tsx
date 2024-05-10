@@ -13,6 +13,7 @@ const AdminPagination = ({
   handlePagination,
   className,
 }: PaginationProps) => {
+  // console.log(totalPages, currentPage);
   const maxPagesToShow = 5; // 한 번에 보여줄 최대 페이지 수
   const halfWindow = Math.floor(maxPagesToShow / 2);
 
@@ -37,9 +38,9 @@ const AdminPagination = ({
     );
   }
   return (
-    <div className={`ad-button-container ${className}`}>
+    <div className={`common-button-containers ${className}`}>
       <div
-        style={{ cursor: 'pointer' }}
+        style={{ cursor: 'pointer', padding: '1rem' }}
         onClick={() => currentPage > 0 && handlePagination('prev')}
       >
         <svg
@@ -60,7 +61,7 @@ const AdminPagination = ({
       </div>
       {pages}
       <div
-        style={{ cursor: 'pointer' }}
+        style={{ cursor: 'pointer', padding: '1rem' }}
         onClick={() => currentPage < totalPages - 1 && handlePagination('next')}
       >
         <svg

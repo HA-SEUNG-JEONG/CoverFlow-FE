@@ -1,22 +1,22 @@
 .notification-list {
   margin-bottom: 10%;
-  width: 105%;
-  margin-left: -2%;
-
   .notification-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 15px;
+    padding: 3rem 3rem 3rem 5rem;
+    margin-left: -0.5rem;
     background-color: #ffffff;
-    border-top: 0.5px solid #ccc;
+    border-top: 0.5px solid #d9d9d9;
+    width: 70rem;
+    height: 14rem;
 
     &.checked {
       background-color: white;
     }
 
     &.unchecked {
-      background-color: #ebf2f2;
+      background-color: #fff9f4;
     }
 
     .notification-icon {
@@ -27,28 +27,45 @@
       letter-spacing: -1px;
       flex-grow: 1;
       margin-bottom: 10px;
-      font-weight: bold;
+      font-family: Pretendard-SemiBold;
+      font-size: 2rem;
+      width: 22rem;
     }
 
     .notification-time {
       letter-spacing: -1px;
       margin-right: 10px;
-      color: #888888;
-      font-size: 15px;
+      color: #474646;
+      font-size: 1.5rem;
     }
 
     .title-time {
       display: flex;
-      margin-left: -40%;
+      margin-left: -7%;
       flex-direction: column;
       letter-spacing: -1px;
     }
 
     .notification-company {
       letter-spacing: -1px;
-      font-family: pretendard-black;
+      // font-family: pretendard-Light;
       color: #333333;
-      margin-right: 5%;
+      font-size: 1.8rem;
+      width: 20rem;
+      white-space: nowrap;
+      // overflow: hidden;
+      text-align: right;
+      margin-right: 4.5%;
+      text-overflow: ellipsis;
     }
   }
+}
+
+.main-page-container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.main-page-container::-webkit-scrollbar {
+  display: none;
 }
