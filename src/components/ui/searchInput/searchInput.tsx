@@ -17,7 +17,7 @@ const StyledSearchInput = styled.input`
   border: 2px solid #ffbd7c;
   background-color: #fff;
   border-radius: 3rem;
-  margin:30% 0% 0% 12.5%;
+  margin: 30% 0% 0% 12.5%;
   outline: none;
 
   &:focus {
@@ -86,10 +86,6 @@ function SearchInput({ setCurrentPage }: SearchInputProps) {
   const isSyllable = (character) => {
     return /^[가-힣a-zA-Z0-9]$/.test(character);
   };
-
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
 
   useEffect(() => {
     if (activeIndex >= 0 && autoCompleteValue[activeIndex]) {
